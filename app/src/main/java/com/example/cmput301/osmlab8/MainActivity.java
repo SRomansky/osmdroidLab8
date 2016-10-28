@@ -1,4 +1,4 @@
-package com.example.cmput301.osmbonuslab8;
+package com.example.cmput301.osmlab8;
 
 import android.app.Activity;
 import android.os.AsyncTask;
@@ -31,57 +31,55 @@ import java.util.List;
 
 public class MainActivity extends Activity {
 
+    // Cmput 301 lab 8 based on open resources.
+    // based on https://github.com/MKergall/osmbonuspack/wiki/Tutorial_0
+    // October 25th, 2016
+    // updated with http://stackoverflow.com/questions/38539637/osmbonuspack-roadmanager-networkonmainthreadexception
+    // October 25th, 2016
+    // answered by: yubaraj poudel
+
+
+
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Cmput 301 lab 8 based on open resources.
-        // based on https://github.com/MKergall/osmbonuspack/wiki/Tutorial_0
-        // October 25th, 2016
-        // updated with http://stackoverflow.com/questions/38539637/osmbonuspack-roadmanager-networkonmainthreadexception
-        // October 25th, 2016
-        // answered by: yubaraj poudel
         setContentView(R.layout.main);
         map = (MapView) findViewById(R.id.map);
         map.setTileSource(TileSourceFactory.MAPNIK);
         map.setBuiltInZoomControls(true);
         map.setMultiTouchControls(true);
 
-
-        startPoint = new GeoPoint(48.13, -1.63);
-        destinationPoint = new GeoPoint(48.4, -1.9);
-
+        GeoPoint startPoint = new GeoPoint(48.13, -1.63);
         IMapController mapController = map.getController();
         mapController.setZoom(9);
         mapController.setCenter(startPoint);
 
-        // to get a key http://developer.mapquest.com/
-        roadManager = new MapQuestRoadManager("--");
-        //roadManager = new OSRMRoadManager(myActivity);
+        Marker startMarker = new Marker(map);
+        startMarker.setPosition(startPoint);
+        startMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+        map.getOverlays().add(startMarker);
 
+        GeoPoint destinationPoint = new GeoPoint(48.4, -1.9);
+        // http://stackoverflow.com/questions/38539637/osmbonuspack-roadmanager-networkonmainthreadexception
+        // accessed on October 27th, 2016
+        // author: yubaraj poudel
         ArrayList<OverlayItem> overlayItemArray;
         overlayItemArray = new ArrayList<>();
 
         overlayItemArray.add(new OverlayItem("Starting Point", "This is the starting point", startPoint));
         overlayItemArray.add(new OverlayItem("Destination", "This is the detination point", destinationPoint));
-        getRoadAsync();
+        getRoadAsync(startPoint, destinationPoint);
     }
 
-    // Global variables for testing
-    // TODO refactor
-    RoadManager roadManager;
+    Activity ourActivity = this;
     MapView map;
-    Activity myActivity = this;
     Road[] mRoads;
-    GeoPoint startPoint;
-    GeoPoint destinationPoint;
 
-    public void getRoadAsync() {
+    public void getRoadAsync(GeoPoint startPoint, GeoPoint destinationPoint) {
         mRoads = null;
-        GeoPoint roadStartPoint = startPoint;
 
         ArrayList<GeoPoint> waypoints = new ArrayList<GeoPoint>(2);
-        waypoints.add(roadStartPoint);
-
+        waypoints.add(startPoint);
         waypoints.add(destinationPoint);
         new UpdateRoadTask().execute(waypoints);
     }
@@ -91,7 +89,7 @@ public class MainActivity extends Activity {
         protected Road[] doInBackground(Object... params) {
             @SuppressWarnings("unchecked")
             ArrayList<GeoPoint> waypoints = (ArrayList<GeoPoint>) params[0];
-
+            RoadManager roadManager = new MapQuestRoadManager("--");
             return roadManager.getRoads(waypoints);
         }
 
@@ -109,18 +107,20 @@ public class MainActivity extends Activity {
             for (int i = 0; i < roads.length; i++) {
                 Polyline roadPolyline = RoadManager.buildRoadOverlay(roads[i]);
                 mRoadOverlays[i] = roadPolyline;
-                String routeDesc = roads[i].getLengthDurationText(myActivity.getBaseContext(), -1);
+                String routeDesc = roads[i].getLengthDurationText(ourActivity, -1);
                 roadPolyline.setTitle(getString(R.string.app_name) + " - " + routeDesc);
                 roadPolyline.setInfoWindow(new BasicInfoWindow(org.osmdroid.bonuspack.R.layout.bonuspack_bubble, map));
                 roadPolyline.setRelatedObject(i);
-
-                mapOverlays.add(0, roadPolyline);
-                map.invalidate();
+//                roadPolyline.setOnClickListener(new RoadOnClickListener());
+                mapOverlays.add(1, roadPolyline);
+                //selectRoad(0);
+//                map.invalidate();
                 //we insert the road overlays at the "bottom", just above the MapEventsOverlay,
                 //to avoid covering the other overlays.
             }
         }
     }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.

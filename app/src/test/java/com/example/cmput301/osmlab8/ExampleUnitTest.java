@@ -1,4 +1,4 @@
-package com.example.cmput301.osmbonuslab8;
+package com.example.cmput301.osmlab8;
 
 import org.junit.Test;
 

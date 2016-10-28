@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.cmput301.osmbonuslab8">
+    package="com.example.cmput301.osmlab8">
 
     <application
         android:allowBackup="true"
